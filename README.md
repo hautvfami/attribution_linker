@@ -19,6 +19,12 @@ dependencies:
   attribution_linker: ^0.0.1
 ```
 
+## Screenshot
+
+<img src="https://github.com/hautvfami/attribution_linker/blob/main/example/screenshots/simulator_screenshot_1.png?raw=true" alt="Attribution Linker Example" width="150">
+
+*Example app showing device fingerprint collection in action*
+
 ## Usage
 
 ### Basic Usage

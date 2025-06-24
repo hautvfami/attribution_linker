@@ -4,12 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Fingerprint Example</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
 </head>
-<body>
-    <h1>Web Browser Fingerprint</h1>
-    <button onclick="collectFingerprint()">Collect Fingerprint</button>
-    <div id="result"></div>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="card-title mb-0 text-center">🔍 Web Browser Fingerprint</h1>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <button class="btn btn-primary btn-lg" onclick="collectFingerprint()">
+                                <i class="bi bi-fingerprint"></i> Collect Fingerprint
+                            </button>
+                        </div>
+                        <div id="result"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Same fingerprint function as used in Flutter WebView
@@ -76,26 +93,78 @@
         // Function to collect and display fingerprint
         async function collectFingerprint() {
             try {
-                const fingerprint = await parseFingerprintInfo();
                 const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Collecting fingerprint data...</p></div>';
                 
-                resultDiv.innerHTML = '<h2>Fingerprint Results:</h2>';
+                // Use the parseFingerprintInfo function from fingerprint.js
+                const fingerprint = await parseFingerprintInfo();
                 
-                for (const [key, value] of Object.entries(fingerprint)) {
-                    if (typeof value === 'object' && value !== null) {
-                        resultDiv.innerHTML += `<p><strong>${key}:</strong> ${JSON.stringify(value, null, 2)}</p>`;
-                    } else {
-                        resultDiv.innerHTML += `<p><strong>${key}:</strong> ${value}</p>`;
-                    }
-                }
+                // Get IP address from API
+                const ipData = await getIPAddress();
+                
+                // Generate trusted_dimension
+                const trustedDimension = generateTrustedDimension(ipData.ip, fingerprint);
+                
+                // Build complete HTML
+                let html = `
+                    <div class="alert alert-success" role="alert">
+                        <h4 class="alert-heading">🔑 Trusted Dimension</h4>
+                        <hr>
+                        <p class="mb-0 font-monospace fw-bold text-break">${trustedDimension}</p>
+                    </div>
+                    
+                    <h3 class="mt-4 mb-3">📊 Fingerprint Results:</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <pre class="mb-0" style="max-height: 400px; overflow-y: auto; font-size: 0.9em;">${JSON.stringify(fingerprint, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+                
+                // Set complete HTML at once
+                resultDiv.innerHTML = html;
                 
                 // Example: Submit to server
                 await submitToServer(fingerprint);
                 
             } catch (error) {
                 console.error('Error collecting fingerprint:', error);
-                document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                document.getElementById('result').innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">❌ Error</h4>
+                        <p class="mb-0">${error.message}</p>
+                    </div>
+                `;
             }
+        }
+
+        // Function to get IP address from API
+        async function getIPAddress() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error getting IP address:', error);
+                return { ip: 'unknown' };
+            }
+        }
+
+        // Function to generate trusted dimension string
+        function generateTrustedDimension(ip, fingerprint) {
+            const dimensions = [
+                ip || 'unknown',
+                fingerprint.os_type || 'unknown',
+                fingerprint.os_name || 'unknown', 
+                fingerprint.screen_res || 'unknown',
+                fingerprint.pixel_ratio?.toString() || 'unknown',
+                fingerprint.timezone || 'unknown'
+            ];
+            
+            // Convert to lowercase, remove spaces, join with "-"
+            return dimensions
+                .map(dim => dim.toString().toLowerCase().replace(/\s+/g, ''))
+                .join('-');
         }
 
         // Example function to submit fingerprint to server
@@ -137,5 +206,6 @@
             };
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
