@@ -19,15 +19,19 @@ class AttributionLinker {
 
   Map<String, dynamic> pendingData = {};
 
+  bool _enableCanvas = false;
+
   Future<void> init({
     String? customScript,
     String? entryPoint,
     Map<String, dynamic> options = const {},
+    bool enableCanvas = false,
   }) async {
     this.customScript = customScript;
     await fingerprint; // Preload fingerprint
     this.entryPoint = entryPoint;
     this.options = options;
+    _enableCanvas = enableCanvas;
   }
 
   Future<Map<String, dynamic>> fetchPendingData({
@@ -75,6 +79,11 @@ class AttributionLinker {
 
     // Create headless WebView to collect fingerprint
     _fingerprint = await _collectFingerprint();
+
+    if (!_enableCanvas) {
+      // Remove canvas-related properties if not enabled
+      _fingerprint!.removeWhere((key, value) => key.startsWith('canvas'));
+    }
     return _fingerprint!;
   }
 

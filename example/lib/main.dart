@@ -107,57 +107,19 @@ class _MyHomePageState extends State<MyHomePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header with fingerprint collection button
-              FingerprintHeaderCard(
-                isLoading: _isLoading,
-                onCollectFingerprint: _collectFingerprint,
-              ),
+              if (_fingerprint == null)
+                FingerprintHeaderCard(
+                  isLoading: _isLoading,
+                  onCollectFingerprint: _collectFingerprint,
+                ),
         
               const SizedBox(height: 16),
 
               // Pending data fetch button (only show if fingerprint collected)
-              if (_fingerprint != null)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.cloud_download,
-                          size: 48,
-                          color: Colors.green,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Fetch Pending Data',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Get attribution data from server',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                        const SizedBox(height: 16),
-                        FilledButton.icon(
-                          onPressed:
-                              _isFetchingPending ? null : _fetchPendingData,
-                          icon: _isFetchingPending
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.download),
-                          label: Text(_isFetchingPending
-                              ? 'Fetching...'
-                              : 'Fetch Data'),
-                        ),
-                      ],
-                    ),
-                  ),
+              if (_fingerprint != null && _pendingData == null)
+                PendingDataFetchCard(
+                  isFetching: _isFetchingPending,
+                  onFetchPendingData: _fetchPendingData,
                 ),
 
               const SizedBox(height: 16),
@@ -168,78 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
               // Pending data display
               if (_pendingData != null)
                 Expanded(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.pending_actions,
-                                  color: Colors.green),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Pending Data',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '${_pendingData!.length} properties',
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          const Divider(),
-                          Expanded(
-                            child: ListView.separated(
-                              itemCount: _pendingData!.entries.length,
-                              separatorBuilder: (context, index) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final entry =
-                                    _pendingData!.entries.elementAt(index);
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          entry.key,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        flex: 3,
-                                        child: Text(
-                                          entry.value?.toString() ?? 'null',
-                                          style: const TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  child: PendingDataDisplayCard(pendingData: _pendingData!),
                 ),
 
               // Fingerprint data display (smaller if pending data exists)
