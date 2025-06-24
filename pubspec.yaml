@@ -1,10 +1,15 @@
 name: attribution_linker
 description: A Flutter package for creating device fingerprints and linking attribution data using WebView. Collect comprehensive device information for analytics and attribution tracking.
-version: 1.0.0
-homepage: https://github.com/hautran/flutter_attribution_linker
-repository: https://github.com/hautran/flutter_attribution_linker
-issue_tracker: https://github.com/hautran/flutter_attribution_linker/issues
-documentation: https://github.com/hautran/flutter_attribution_linker#readme
+version: 1.0.1
+homepage: https://applink.io.vn/generate.html
+repository: https://github.com/hautvfami/attribution_linker
+issue_tracker: https://github.com/hautvfami/attribution_linker/issues
+documentation: https://github.com/hautvfami/attribution_linker#readme
+screenshots:
+  - description: The attribution linker logo.
+    path: docs/logo.png
+funding:
+  - https://github.com/sponsors/hautvfami/
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

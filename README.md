@@ -9,6 +9,7 @@ A Flutter package for creating device fingerprints and attribution linking using
 - 💾 **Caching**: Fingerprint data is cached after first collection
 - 🔒 **Privacy-Aware**: Collects only standard browser API data
 - 📱 **Cross-Platform**: Works on iOS and Android
+- 🔗 **Post-FDL Solution**: Enhanced attribution for App Links/Universal Links after Firebase Dynamic Links discontinuation
 
 ## Installation
 
@@ -219,6 +220,92 @@ This package is ideal when you need:
 - **Simple Implementation**: Quick setup without extensive SDK integration
 
 For enterprise needs requiring 95%+ accuracy, consider traditional platforms.
+
+## Firebase Dynamic Links Alternative
+
+### 🚨 FDL Discontinuation Impact
+
+Firebase Dynamic Links (FDL) will be discontinued on **August 25, 2025**. This creates a significant gap for apps relying on FDL for attribution and deep linking. While App Links (Android) and Universal Links (iOS) provide deep linking functionality, they lack the attribution capabilities that FDL offered.
+
+### 🔗 Enhanced App Links/Universal Links
+
+This package provides the missing attribution layer for native deep links:
+
+```mermaid
+graph LR
+    A[Marketing Campaign] --> B[Landing Page]
+    B --> C{User Action}
+    C -->|Install App| D[App Store]
+    C -->|Open App| E[App Links/Universal Links]
+    D --> F[App First Launch]
+    E --> G[App Deep Link Handler]
+    F --> H[Attribution Linker]
+    G --> H
+    H --> I[Campaign Attribution]
+    
+    subgraph "Attribution Flow"
+        J[Web Fingerprint] --> K[Trusted Dimension]
+        K --> L[Backend Storage]
+        M[App Fingerprint] --> N[Lookup & Match]
+        L --> N
+        N --> O[Attribution Result]
+    end
+```
+
+### Implementation Strategy
+
+#### 1. **Landing Page Setup**
+```html
+<!-- Replace FDL with regular App Links -->
+<script>
+  // Collect fingerprint when user lands
+  const fingerprint = await collectFingerprint();
+  const utmParams = getURLParameters();
+  
+  // Store attribution data
+  await storeAttribution(fingerprint, utmParams);
+  
+  // Redirect to App Link/Universal Link
+  if (isMobile()) {
+    window.location = 'https://yourapp.com/campaign?utm_source=google';
+  }
+</script>
+```
+
+#### 2. **App Integration**
+```dart
+// Replace FDL handling with Attribution Linker
+class AppLinkHandler {
+  static Future<void> handleAppLink(String link) async {
+    // Get attribution data first
+    final linker = AttributionLinker();
+    final attribution = await linker.getAttributionData();
+    
+    // Process deep link with attribution context
+    await processDeepLink(link, attribution);
+  }
+}
+```
+
+### Migration Benefits
+
+- **✅ No Service Dependency**: Unlike FDL, no Google service dependency
+- **✅ Cost Control**: Predictable costs vs potential FDL pricing
+- **✅ Privacy Compliant**: Built-in GDPR/CCPA compliance
+- **✅ Customizable**: Full control over attribution logic
+- **✅ Performance**: Faster than FDL redirects
+
+### FDL vs Attribution Linker Comparison
+
+| Feature | Firebase Dynamic Links | Attribution Linker |
+|---------|----------------------|-------------------|
+| **Service Status** | ❌ Discontinued 08/25/2025 | ✅ Active Development |
+| **Attribution** | ✅ Built-in | ✅ Enhanced with fingerprinting |
+| **Deep Linking** | ✅ Automatic | ⚠️ Requires App Links/Universal Links |
+| **Privacy** | ⚠️ Google's terms | ✅ Full privacy control |
+| **Cost** | ❌ Paid service | ✅ Free tier available |
+| **Customization** | ❌ Limited | ✅ Full source code access |
+| **Cross-Platform** | ✅ iOS/Android | ✅ iOS/Android/Web |
 
 ## Recommended Infrastructure
 
