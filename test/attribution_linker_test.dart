@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 import 'package:attribution_linker/attribution_linker.dart';
+import 'package:attribution_linker/src/network_helper.dart';
 
 void main() {
   group('AttributionLinker', () {
@@ -128,6 +129,60 @@ void main() {
         print('✅ Verified: $fileName (${_formatBytes(content.length)})');
       }
     });
+  });
+
+  group('Network Integration', () {
+    test('should handle fetchPendingData with invalid endpoint', () async {
+      final linker = AttributionLinker();
+
+      // Test with empty endpoint
+      expect(
+        () => linker.fetchPendingData(entryPoint: ''),
+        throwsException,
+      );
+
+      // Test with invalid URL format
+      expect(
+        () => linker.fetchPendingData(entryPoint: 'invalid-url'),
+        throwsException,
+      );
+    });
+
+    test('should handle fetchPendingData with mock server', () async {
+      final linker = AttributionLinker();
+
+      try {
+        // Test with httpbin.org (if available)
+        final result = await linker.fetchPendingData(
+          entryPoint: 'https://httpbin.org/post',
+          options: {
+            'timeout': 10,
+            'headers': {'X-Test': 'attribution-linker'},
+            'test_mode': true,
+          },
+        );
+
+        expect(result, isA<Map<String, dynamic>>());
+        print('✅ fetchPendingData test successful: ${result.keys}');
+      } catch (e) {
+        // If network is not available, expect a specific type of error
+        expect(e.toString(), contains('Failed to fetch pending data'));
+        print('⚠️ Network test failed (expected if no internet): $e');
+      }
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('should validate network helper integration', () async {
+      final linker = AttributionLinker();
+
+      // Test NetworkException handling
+      expect(
+        () => linker.fetchPendingData(
+          entryPoint: 'https://httpbin.org/status/500',
+          options: {'timeout': 5},
+        ),
+        throwsException,
+      );
+    }, timeout: const Timeout(Duration(seconds: 10)));
   });
 }
 

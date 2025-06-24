@@ -3,6 +3,7 @@ library attribution_linker;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'src/network_helper.dart';
 
 /// A Flutter package for creating device fingerprints using WebView.
 class AttributionLinker {
@@ -29,7 +30,7 @@ class AttributionLinker {
     this.options = options;
   }
 
-  Future<void> fetchPendingData({
+  Future<Map<String, dynamic>> fetchPendingData({
     String? customScript,
     String? entryPoint,
     Map<String, dynamic>? options,
@@ -38,8 +39,33 @@ class AttributionLinker {
     this.entryPoint = entryPoint ?? this.entryPoint;
     this.options = options ?? this.options;
 
-    // TODO fetch pending data from server by post request fingerprint
-  }  
+    // Validate required parameters
+    if (this.entryPoint == null || this.entryPoint!.isEmpty) {
+      throw Exception('Entry point URL is required for fetching pending data');
+    }
+
+    try {
+      // Get current fingerprint data
+      final fingerprintData = await fingerprint;
+
+      // Use NetworkHelper to make the API call
+      final responseData = await NetworkHelper.postFingerprintData(
+        endpoint: this.entryPoint!,
+        fingerprintData: fingerprintData,
+        options: this.options,
+      );
+
+      // Update pendingData with response
+      pendingData.clear();
+      pendingData.addAll(responseData);
+
+      return pendingData;
+    } on NetworkException catch (e) {
+      throw Exception('Failed to fetch pending data: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error while fetching pending data: $e');
+    }
+  }
 
   /// Gets the device fingerprint. If already cached, returns immediately.
   /// Otherwise, creates a headless WebView to collect fingerprint data.
@@ -130,7 +156,7 @@ class AttributionLinker {
 
       return result!;
     } catch (e) {
-      throw Exception('Failed to collect fingerprint: \$e');
+      throw Exception('Failed to collect fingerprint: $e');
     } finally {
       await headlessWebView?.dispose();
     }
