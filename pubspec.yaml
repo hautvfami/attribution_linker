@@ -24,7 +24,7 @@ dev_dependencies:
 
 flutter:
   assets:
-    - /assets/
+    - packages/attribution_linker/assets/
 
 topics:
   - attribution
