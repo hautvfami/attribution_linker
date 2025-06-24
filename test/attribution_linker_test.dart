@@ -97,6 +97,7 @@ void main() {
       final projectRoot = _findProjectRoot(currentDir);
       final assetsDir = Directory(path.join(projectRoot.path, 'assets'));
 
+      // Check downloadable assets
       for (final fileName in assetsToUpdate.keys) {
         final filePath = path.join(assetsDir.path, fileName);
         final file = File(filePath);
@@ -107,6 +108,22 @@ void main() {
         final content = await file.readAsString();
         expect(content.isNotEmpty, isTrue,
             reason: 'Asset file $fileName should not be empty');
+
+        print('✅ Verified: $fileName (${_formatBytes(content.length)})');
+      }
+
+      // Check local JavaScript assets
+      final localAssets = ['fingerprint.js'];
+      for (final fileName in localAssets) {
+        final filePath = path.join(assetsDir.path, fileName);
+        final file = File(filePath);
+
+        expect(file.existsSync(), isTrue,
+            reason: 'Local asset file $fileName should exist');
+
+        final content = await file.readAsString();
+        expect(content.isNotEmpty, isTrue,
+            reason: 'Local asset file $fileName should not be empty');
 
         print('✅ Verified: $fileName (${_formatBytes(content.length)})');
       }

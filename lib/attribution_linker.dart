@@ -7,25 +7,45 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 /// A Flutter package for creating device fingerprints using WebView.
 class AttributionLinker {
   /// Singleton instance of AttributionLinker.
-  static final AttributionLinker _instance = AttributionLinker._internal();
-  factory AttributionLinker() {
-    return _instance;
-  }
+  static final AttributionLinker inst = AttributionLinker._internal();
+  factory AttributionLinker() => inst;
   AttributionLinker._internal();
 
   Map<String, dynamic>? _fingerprint;
+  String? customScript;
+  String? entryPoint;
+  Map<String, dynamic> options = {};
 
-  void init() {
-    // Initialization logic can be added here if needed.
+  Map<String, dynamic> pendingData = {};
+
+  Future<void> init({
+    String? customScript,
+    String? entryPoint,
+    Map<String, dynamic> options = const {},
+  }) async {
+    this.customScript = customScript;
+    await fingerprint; // Preload fingerprint
+    this.entryPoint = entryPoint;
+    this.options = options;
   }
+
+  Future<void> fetchPendingData({
+    String? customScript,
+    String? entryPoint,
+    Map<String, dynamic>? options,
+  }) async {
+    this.customScript = customScript ?? this.customScript;
+    this.entryPoint = entryPoint ?? this.entryPoint;
+    this.options = options ?? this.options;
+
+    // TODO fetch pending data from server by post request fingerprint
+  }  
 
   /// Gets the device fingerprint. If already cached, returns immediately.
   /// Otherwise, creates a headless WebView to collect fingerprint data.
   Future<Map<String, dynamic>> get fingerprint async {
     // Return cached fingerprint if available
-    if (_fingerprint != null) {
-      return _fingerprint!;
-    }
+    if (_fingerprint != null) return _fingerprint!;
 
     // Create headless WebView to collect fingerprint
     _fingerprint = await _collectFingerprint();
@@ -41,76 +61,20 @@ class AttributionLinker {
       final String uaParserJs = await rootBundle
           .loadString('packages/attribution_linker/assets/ua-parser.min.js');
 
-      // JavaScript code to collect fingerprint
-      final String fingerprintJs = '''
+      // Load fingerprint script - use custom script if provided, otherwise use default
+      String fingerprintScript;
+      if (customScript != null && customScript!.isNotEmpty) {
+        fingerprintScript = customScript!;
+      } else {
+        fingerprintScript = await rootBundle
+            .loadString('packages/attribution_linker/assets/fingerprint.js');
+      }
+
+      // Combine UAParser with fingerprint script
+      final String combinedScript = '''
         $uaParserJs
         
-        async function parseFingerprintInfo() {
-          const ua = navigator.userAgent || '';
-          const uaData = navigator.userAgentData;
-
-          // 🧠 Ưu tiên entropy cao nếu có hỗ trợ
-          const highEntropy = uaData?.getHighEntropyValues
-            ? await uaData.getHighEntropyValues([
-                "platform", "platformVersion", "architecture", "model", "uaFullVersion", "bitness", "fullVersionList"
-              ])
-            : null;
-
-          // 📦 Dùng UAParser.js
-          const parser = new UAParser(ua);
-          const parsed = parser.getResult();
-
-          // 📱 Phân loại hệ điều hành
-          function detectOS() {
-            const p = (highEntropy?.platform || parsed.os.name || '').toLowerCase();
-            if (p.includes('android')) return 'android';
-            if (p.includes('ios')) return 'ios';
-            if (p.includes('ipad')) return 'ipados';
-            if (p.includes('mac')) return 'macos';
-            if (p.includes('win')) return 'windows';
-            if (p.includes('linux')) return 'linux';
-            return 'others';
-          }
-
-          const osType = detectOS();
-
-          // 🌙 Phát hiện hệ thống sáng/tối
-          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const systemBrightness = prefersDark ? 'dark' : 'light';
-
-          // ✅ Trải phẳng dữ liệu fingerprint
-          const fingerprint = {
-            os_type: osType,
-            os_name: highEntropy?.platform || parsed.os.name || '',
-            os_version: highEntropy?.platformVersion || parsed.os.version || '',
-            browser_name: parsed.browser.name || '',
-            browser_version: highEntropy?.uaFullVersion || parsed.browser.version || '',
-            device_model: highEntropy?.model || parsed.device.model || '',
-            device_type: parsed.device.type || '',
-            device_arch: highEntropy?.architecture || '',
-            device_bitness: highEntropy?.bitness || '',
-            screen_res: `\${screen.width}x\${screen.height}`,
-            pixel_ratio: window.devicePixelRatio || 1,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
-            language: navigator.language || '',
-            cpu_cores: navigator.hardwareConcurrency?.toString() || '',
-            device_memory: navigator.deviceMemory?.toString() || '',
-            system_brightness: systemBrightness,
-            user_agent: ua,
-            user_agent_data: uaData || null,
-            user_agent_parsed: parsed,
-            browser_full_version_list: highEntropy?.fullVersionList?.map(b => `\${b.brand}/\${b.version}`).join(', ') || ''
-          };
-
-          return fingerprint;
-        }
-        
-        // Execute and return result
-        parseFingerprintInfo().then(result => {
-          window.flutter_inappwebview.callHandler('fingerprintResult', JSON.stringify(result));
-        }).catch(error => {
-          window.flutter_inappwebview.callHandler('fingerprintError', error.toString());
-        });
+        $fingerprintScript
       ''';
 
       Map<String, dynamic>? result;
@@ -140,7 +104,7 @@ class AttributionLinker {
         },
         onLoadStop: (controller, url) async {
           // Execute fingerprint collection script
-          await controller.evaluateJavascript(source: fingerprintJs);
+          await controller.evaluateJavascript(source: combinedScript);
         },
       );
 

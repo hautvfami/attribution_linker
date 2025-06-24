@@ -13,9 +13,13 @@ Project này có một test đặc biệt để tự động tải và cập nh�
 
 ### 📋 Assets hiện tại được quản lý
 
-| File | Source URL | Description |
-|------|------------|-------------|
-| `ua-parser.min.js` | [ua-parser-js/master](https://raw.githubusercontent.com/faisalman/ua-parser-js/refs/heads/master/dist/ua-parser.min.js) | User Agent Parser Library |
+| File | Type | Source | Description |
+|------|------|--------|-------------|
+| `ua-parser.min.js` | Remote | [ua-parser-js/master](https://raw.githubusercontent.com/faisalman/ua-parser-js/refs/heads/master/dist/ua-parser.min.js) | User Agent Parser Library |
+| `fingerprint.js` | Local | Project assets | Device fingerprinting script |
+
+**Remote assets**: Được tự động tải từ internet khi chạy test  
+**Local assets**: Được quản lý trong project, có thể override bằng custom script
 
 ### 🚀 Cách sử dụng
 
