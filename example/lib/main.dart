@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:attribution_linker/attribution_linker.dart';
+import 'widgets/widgets.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Attribution Linker Demo',
+      title: 'Attribution Linker',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -62,150 +63,30 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Attribution Linker Demo'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.fingerprint,
-                      size: 48,
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Device Fingerprinting',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Collect unique device fingerprint data',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _isLoading ? null : _collectFingerprint,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.play_arrow),
-                      label: Text(
-                          _isLoading ? 'Collecting...' : 'Collect Fingerprint'),
-                    ),
-                  ],
-                ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header with fingerprint collection button
+              FingerprintHeaderCard(
+                isLoading: _isLoading,
+                onCollectFingerprint: _collectFingerprint,
               ),
-            ),
-            const SizedBox(height: 16),
-            if (_error != null) _buildErrorCard(),
-            if (_fingerprint != null) Expanded(child: _buildFingerprintCard()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorCard() {
-    return Card(
-      color: Colors.red.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Icon(Icons.error, color: Colors.red.shade700),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Error: $_error',
-                style: TextStyle(color: Colors.red.shade700),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFingerprintCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.data_object, color: Colors.green),
-                const SizedBox(width: 8),
-                const Text(
-                  'Fingerprint Data',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+        
+              const SizedBox(height: 16),
+        
+              // Error display
+              if (_error != null) ErrorCard(error: _error!),
+        
+              // Fingerprint data display
+              if (_fingerprint != null)
+                Expanded(
+                  child: FingerprintDataCard(fingerprint: _fingerprint!),
                 ),
-                const Spacer(),
-                Text(
-                  '${_fingerprint!.length} properties',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-            const Divider(),
-            Expanded(
-              child: ListView.separated(
-                itemCount: _fingerprint!.entries.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final entry = _fingerprint!.entries.elementAt(index);
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            entry.key,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            entry.value?.toString() ?? 'null',
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
